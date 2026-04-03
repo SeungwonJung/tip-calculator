@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>팁 계산기</title>
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+          integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4"
+          crossorigin="anonymous"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -311,26 +314,37 @@
 
     calculate();
 
+    // Kakao SDK 초기화
+    if (window.Kakao && !Kakao.isInitialized()) {
+      Kakao.init('dcec1fc2961c3065a1d756a91d68e4b2');
+    }
+
     // 카카오톡 공유 버튼
     document.getElementById('shareBtn').addEventListener('click', function () {
-      const bill    = billInput.value || '0';
-      const people  = peopleInput.value || '1';
-      const total   = totalAmountEl.textContent;
-      const per     = perPersonEl.textContent;
+      const bill   = billInput.value || '0';
+      const people = peopleInput.value || '1';
+      const total  = totalAmountEl.textContent;
+      const per    = perPersonEl.textContent;
 
-      const text =
-        `🧾 팁 계산 결과\n` +
-        `결제금액: ₩${bill}\n` +
-        `인원수: ${people}명 (팁 10%)\n` +
-        `합계: ${total}\n` +
-        `👤 1인당: ${per}`;
+      const shareText =
+        `🧾 팁 계산 결과\n결제금액: ₩${bill}\n인원수: ${people}명 (팁 10%)\n합계: ${total}\n👤 1인당: ${per}`;
 
-      if (navigator.share) {
-        navigator.share({ title: '팁 계산기', text: text })
-          .catch(() => {});
+      // 1순위: Kakao SDK
+      if (window.Kakao && Kakao.isInitialized()) {
+        Kakao.Share.sendDefault({
+          objectType: 'text',
+          text: shareText,
+          link: {
+            mobileWebUrl: 'https://seungwonjung.github.io/tip-calculator/',
+            webUrl: 'https://seungwonjung.github.io/tip-calculator/',
+          },
+        });
+      // 2순위: Web Share API (카카오톡 외 다른 앱)
+      } else if (navigator.share) {
+        navigator.share({ title: '팁 계산기', text: shareText }).catch(() => {});
+      // 3순위: 클립보드 복사
       } else {
-        // PC 환경 — 클립보드 복사
-        navigator.clipboard.writeText(text).then(function () {
+        navigator.clipboard.writeText(shareText).then(function () {
           alert('결과가 클립보드에 복사됐어요!\n카카오톡에 붙여넣기 하세요 😊');
         });
       }
